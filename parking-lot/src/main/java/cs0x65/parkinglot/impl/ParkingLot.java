@@ -77,8 +77,8 @@ public class ParkingLot implements Parkable<Car, Ticket>{
      * The enum captures the unit applied to while measuring the parked time of a car at a given parking slot.
      */
     public enum ParkedTimeUnit {
-        HOUR(60),
-        MINUTE(3600);
+        HOUR(3600),
+        MINUTE(60);
 
         private int timeInSeconds;
 

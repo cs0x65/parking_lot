@@ -70,7 +70,8 @@ public class Ticket {
      * is 9000 seconds i.e. 2.5 hours, then this method returns ceil'ed hours i.e. 3.
      */
     public long getDuration(ParkingLot.ParkedTimeUnit parkedTimeUnit){
-        return (long) Math.ceil((leftAt - parkedAt) * 1000 / parkedTimeUnit.getTimeInSeconds());
+        double duration = (double)(leftAt - parkedAt) / (double) (parkedTimeUnit.getTimeInSeconds() * 1000);
+        return (long) Math.ceil(duration);
     }
 
     public long getCharges() {
