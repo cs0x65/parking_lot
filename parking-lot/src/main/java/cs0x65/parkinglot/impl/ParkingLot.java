@@ -100,18 +100,19 @@ public class ParkingLot implements Parkable<Car, Ticket>{
     private int subsequentDurationRate;
 
     /**
-     * Maintains the {@link Car} car entries indexed by the parking slot.
+     * Represents the list of parking slots where each slot number is the list index.
+     * If the slot is occupied, it has a non-null {@link Car} entry at the corresponding index in the slot.
      * <br/>
      * The parking slot with index i-1 is nearest to the parking lot entry than the slot with index i.
      * Each new car coming into the parking lot is always allocated to the nearest available slot from the entry.
      */
-    private List<Car> carsParked;
+    private List<Car> slots;
 
     /**
      * A handy way to quickly:<br/>
-     * - lookup for an existence of a car in the parking lot O(1) v/s O(n) required for lookup within carsParked list.
+     * - lookup for an existence of a car in the parking lot O(1) v/s O(n) required for lookup within slots list.
      * <br/>
-     * - ability to directly identify the parking slot index maintained by {@link #carsParked} and reset it to null
+     * - ability to directly identify the parking slot index maintained by {@link #slots} and reset it to null
      * whenever a car leaves the parking lot. Again this reduces the time required to identify the slot index occupied
      * by the car from O(n) to O(1).
      */
@@ -127,8 +128,15 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         this.subsequentDuration = builder.subsequentDuration;
         this.initialDurationRate = builder.initialDurationRate;
         this.subsequentDurationRate = builder.subsequentDurationRate;
-        carsParked = new ArrayList<>(size);
         carTicketMap = new HashMap<>(size);
+        initSlots();
+    }
+
+    private void initSlots(){
+        slots = new ArrayList<>(size);
+        for (int i = 0; i < size ; i++) {
+            slots.add(null);
+        }
     }
 
     /**
@@ -249,8 +257,16 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         this.subsequentDurationRate = subsequentDurationRate;
     }
 
+    /**
+     *
+     * @return the number of currently occupied slots for the given parking lot.
+     */
+    public int getNumOccupiedSlots() {
+        return numOccupiedSlots;
+    }
+
     public Ticket park(Car car) {
-        if (numOccupiedSlots == carsParked.size())
+        if (numOccupiedSlots == size)
             throw new IllegalStateException("Sorry, parking lot is full");
 
         Ticket ticket = carTicketMap.get(car);
@@ -258,15 +274,11 @@ public class ParkingLot implements Parkable<Car, Ticket>{
             throw new IllegalArgumentException("The car: "+car.getRegNo()+" is already parked at slot: "+
                     ticket.getSlot());
 
-        for (int i = 0; i < carsParked.size() ; i++) {
-            if (carsParked.get(i) == null){
-                ticket = new Ticket(i, car, System.currentTimeMillis());
-                carsParked.set(i, car);
-                carTicketMap.put(car, ticket);
-                numOccupiedSlots++;
-                break;
-            }
-        }
+        int index = getNearestAvailableSlotIndex();
+        ticket = new Ticket(index, car, System.currentTimeMillis());
+        slots.set(index-1, car);
+        carTicketMap.put(car, ticket);
+        numOccupiedSlots++;
         return ticket;
     }
 
@@ -292,13 +304,13 @@ public class ParkingLot implements Parkable<Car, Ticket>{
             throw new IllegalArgumentException("Sorry, the car: "+car.getRegNo()+" is not found in the parking lot, " +
                     "please verify and provide the correct registration number for your car!");
 
-        return removeCar(car, ticket.getDuration(parkedTimeUnit));
+        return removeCar(car);
     }
 
     public String status() {
         StringBuilder stringBuilder = new StringBuilder("Slot No. Registration No.");
-        for (int i = 0; i < carsParked.size(); i++) {
-            Car car = carsParked.get(i);
+        for (int i = 0; i < slots.size(); i++) {
+            Car car = slots.get(i);
             if (car != null){
                 // TODO: format columns/add width formatter
                 stringBuilder.append(i+" "+car.getRegNo());
@@ -307,12 +319,36 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         return stringBuilder.toString();
     }
 
+    /**
+     *
+     * @return the index of the nearest slot from the entry that's available to park an incoming car.
+     */
+    public int getNearestAvailableSlotIndex(){
+        for (int i = 0; i < slots.size() ; i++) {
+            if (slots.get(i) == null){
+                return i+1;
+            }
+        }
+        return -1;
+    }
+
     private Ticket removeCar(Car car, long duration) {
         Ticket ticket = carTicketMap.get(car);
-        carsParked.set(ticket.getSlot(), null);
+        slots.set(ticket.getSlot() - 1, null);
         carTicketMap.remove(car);
+        // When the duration is directly provided, need to set leftAt = parkedAt + duration.
+        if (ticket.getLeftAt() == 0)
+            ticket.setLeftAt(ticket.getParkedAt() + duration * parkedTimeUnit.getTimeInSeconds() * 1000);
         ticket.setCharges(calculateCharges(duration));
+        numOccupiedSlots--;
         return ticket;
+    }
+
+    private Ticket removeCar(Car car){
+        Ticket ticket = carTicketMap.get(car);
+        // Duration was not provided, so leftAt needs to be set before computing the duration.
+        ticket.setLeftAt(System.currentTimeMillis());
+        return removeCar(car, ticket.getDuration(parkedTimeUnit));
     }
 
     private long calculateCharges(long duration){
