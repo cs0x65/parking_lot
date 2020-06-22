@@ -24,7 +24,7 @@ public class ParkingLot implements Parkable<Car, Ticket>{
      * criteria/configuration.
      */
     public static final class Builder{
-        private int size;
+        private final int size;
         private String name;
         private ParkedTimeUnit parkedTimeUnit = ParkedTimeUnit.HOUR;
         private int initialDuration = 2;
@@ -32,6 +32,12 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         private int initialDurationRate = 10;
         private int subsequentDurationRate = 10;
 
+        /**
+         * Creates a builder that will build the parking lot with the given size.<br/>
+         * This is the maximum number of parking slots available in the generated parking lot (and therefore the maximum
+         * number of cars that can be parked).
+         * @param size the size of the {@code ParkingLot} that will be built.
+         */
         public Builder(int size){
             this.size = size;
         }
@@ -42,31 +48,66 @@ public class ParkingLot implements Parkable<Car, Ticket>{
             return new ParkingLot(this);
         }
 
+        /**
+         * The name can be any descriptive text that can be associated with the parking lot, for e.g. address,
+         * a landmark etc.
+         * @param name name of the current parking lot.
+         */
         public Builder withName(String name) {
             this.name = name;
             return this;
         }
 
+        /**
+         * Sets the time unit that shall be applied while measuring the duration for which the car is parked at a
+         * particular parking slot. <br/><br/>
+         *
+         * For e.g. if the unit is set to {@link ParkedTimeUnit#HOUR}, then both - initial duration and subsequent
+         * duration are measured in hours and the corresponding rates also need to specified per integral multiple of
+         * hours like, 10$ per 1st 2 hours & 10$ for each subsequent hour. <br/><br/>
+         *
+         * Use {@link ParkedTimeUnit#MINUTE} if the duration needs to be measured in sub-hours.
+         * @param parkedTimeUnit {@link ParkedTimeUnit}. Default value is HOUR
+         */
         public Builder withParkedTimeUnit(ParkedTimeUnit parkedTimeUnit) {
             this.parkedTimeUnit = parkedTimeUnit;
             return this;
         }
 
+        /**
+         * Sets the initial duration. The total parked time is composed of the initial duration and subsequent duration,
+         * and charges are calculated based on the corresponding rates.
+         * @param initialDuration the initial duration measured in the unit that's set by {@code withParkedTimeUnit}
+         *                        Default value is 2 hours.
+         */
         public Builder withInitialDuration(int initialDuration) {
             this.initialDuration = initialDuration;
             return this;
         }
 
+        /**
+         * Sets the subsequent duration. See {@link #withInitialDuration(int)} for more details.
+         * @param subsequentDuration the subsequent duration measured in the unit that's set by
+         * {@code withParkedTimeUnit}. Default value is 1 hour.
+         */
         public Builder withSubsequentDuration(int subsequentDuration) {
             this.subsequentDuration = subsequentDuration;
             return this;
         }
 
+        /**
+         * @param initialDurationRate the parking rate applicable for the initial duration.
+         *                            Default value is 15, so rate is 10 for 1st 2 hours.
+         */
         public Builder withInitialDurationRate(int initialDurationRate) {
             this.initialDurationRate = initialDurationRate;
             return this;
         }
 
+        /**
+         * @param subsequentDurationRate the parking rate applicable for the subsequent duration.
+         *                               Default value is 10, so rate is 10 for each subsequent hour.
+         */
         public Builder withSubsequentDurationRate(int subsequentDurationRate) {
             this.subsequentDurationRate = subsequentDurationRate;
             return this;
@@ -80,7 +121,7 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         HOUR(3600),
         MINUTE(60);
 
-        private int timeInSeconds;
+        private final int timeInSeconds;
 
         ParkedTimeUnit(int timeInSeconds){
             this.timeInSeconds = timeInSeconds;
@@ -91,13 +132,13 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         }
     }
     
-    private int size;
-    private String name;
-    private ParkedTimeUnit parkedTimeUnit;
-    private int initialDuration;
-    private int subsequentDuration;
-    private int initialDurationRate;
-    private int subsequentDurationRate;
+    private final int size;
+    private final String name;
+    private final ParkedTimeUnit parkedTimeUnit;
+    private final int initialDuration;
+    private final int subsequentDuration;
+    private final int initialDurationRate;
+    private final int subsequentDurationRate;
 
     /**
      * Represents the list of parking slots where each slot number is the list index.
@@ -106,7 +147,7 @@ public class ParkingLot implements Parkable<Car, Ticket>{
      * The parking slot with index i-1 is nearest to the parking lot entry than the slot with index i.
      * Each new car coming into the parking lot is always allocated to the nearest available slot from the entry.
      */
-    private List<Car> slots;
+    private final List<Car> slots;
 
     /**
      * A handy way to quickly:<br/>
@@ -116,7 +157,7 @@ public class ParkingLot implements Parkable<Car, Ticket>{
      * whenever a car leaves the parking lot. Again this reduces the time required to identify the slot index occupied
      * by the car from O(n) to O(1).
      */
-    private Map<Car, Ticket> carTicketMap;
+    private final Map<Car, Ticket> carTicketMap;
 
     private int numOccupiedSlots;
 
@@ -129,11 +170,11 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         this.initialDurationRate = builder.initialDurationRate;
         this.subsequentDurationRate = builder.subsequentDurationRate;
         carTicketMap = new HashMap<>(size);
+        slots = new ArrayList<>(size);
         initSlots();
     }
 
     private void initSlots(){
-        slots = new ArrayList<>(size);
         for (int i = 0; i < size ; i++) {
             slots.add(null);
         }
@@ -148,30 +189,11 @@ public class ParkingLot implements Parkable<Car, Ticket>{
     }
 
     /**
-     * Sets the size of the current parking lot.<br/>
-     * This is the maximum number of parking slots available in the current parking lot (and so therefore the maximum
-     * number of cars that can be parked).
-     * @param size the size of the current parking lot.
-     */
-    public void setSize(int size) {
-        this.size = size;
-    }
-
-    /**
      *
      * @return the name of the parking lot.
      */
     public String getName() {
         return name;
-    }
-
-    /**
-     * The name can be any descriptive text that can be associated with the parking lot, for e.g. address, a landmark
-     * etc.
-     * @param name name of the current parking lot.
-     */
-    public void setName(String name) {
-        this.name = name;
     }
 
     /**
@@ -183,50 +205,18 @@ public class ParkingLot implements Parkable<Car, Ticket>{
     }
 
     /**
-     * Sets the time unit that shall be applied while measuring the duration for which the car is parked at a
-     * particular parking slot. <br/>
      *
-     * For e.g. if the unit is set to {@link ParkedTimeUnit#HOUR}, then both - initial duration and subsequent duration
-     * are measured in hours and the corresponding rates also need to specified per integral multiple of hours like,
-     * 10$ per 1st 2 hours & 10$ for each subsequent hour. <br/>
-     *
-     * Use {@link ParkedTimeUnit#MINUTE} if the duration needs to be measured in sub-hours.
-     * @param parkedTimeUnit {@link ParkedTimeUnit}
-     */
-    public void setParkedTimeUnit(ParkedTimeUnit parkedTimeUnit) {
-        this.parkedTimeUnit = parkedTimeUnit;
-    }
-
-    /**
-     *
-     * @return the initial duration measured in the unit that's set by {@link ParkingLot#getParkedTimeUnit()}
+     * @return the initial duration measured in the unit that's specified by {@link ParkingLot#getParkedTimeUnit()}
      */
     public int getInitialDuration() {
         return initialDuration;
     }
 
     /**
-     * Sets the initial duration. The total parked time is composed of the initial duration and subsequent duration,
-     * and charges are calculated based on the corresponding rates.
-     * @param initialDuration the initial duration measured in the unit that's set by {@code setParkedTimeUnit}
-     */
-    public void setInitialDuration(int initialDuration) {
-        this.initialDuration = initialDuration;
-    }
-
-    /**
-     * @return the subsequent duration measured in the unit that's set by {@link ParkingLot#getParkedTimeUnit()}
+     * @return the subsequent duration measured in the unit that's specified by {@link ParkingLot#getParkedTimeUnit()}
      */
     public int getSubsequentDuration() {
         return subsequentDuration;
-    }
-
-    /**
-     * Sets the subsequent duration. See {@link ParkingLot#setInitialDuration(int)} for more details.
-     * @param subsequentDuration the subsequent duration measured in the unit that's set by {@code setParkedTimeUnit}
-     */
-    public void setSubsequentDuration(int subsequentDuration) {
-        this.subsequentDuration = subsequentDuration;
     }
 
     /**
@@ -237,24 +227,10 @@ public class ParkingLot implements Parkable<Car, Ticket>{
     }
 
     /**
-     * @param initialDurationRate the parking rate applicable for the initial duration.
-     */
-    public void setInitialDurationRate(int initialDurationRate) {
-        this.initialDurationRate = initialDurationRate;
-    }
-
-    /**
      * @return the parking rate applicable for the subsequent duration.
      */
     public int getSubsequentDurationRate() {
         return subsequentDurationRate;
-    }
-
-    /**
-     * @param subsequentDurationRate the parking rate applicable for the subsequent duration.
-     */
-    public void setSubsequentDurationRate(int subsequentDurationRate) {
-        this.subsequentDurationRate = subsequentDurationRate;
     }
 
     /**
@@ -307,16 +283,49 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         return removeCar(car);
     }
 
+    /**
+     * A utility method to get the formatted text representation of the current status of the parking lot.<br/>
+     *
+     * The formatted text contains two columns/headers: the 1st column is Slot No. & 2nd Registration No.
+     * with each entry on a separate row.
+     * <br/><br/>
+     * Note: If the parking slot is empty, it's represented as "--" under the 2nd column.
+     * <br/><br/>
+     * E.g. if the parking lot has 4 slots and when all of those are occupied, then the status looks like:<br/>
+     *
+     * <table>
+     *     <th>Slot No.</th>
+     *     <th>Registration No.</th>
+     *     <tr>
+     *         <td>1</td>
+     *         <td>MH-12-AB-1234</td>
+     *     </tr>
+     *     <tr>
+     *         <td>2</td>
+     *         <td>MH-15-FG-102</td>
+     *     </tr>
+     *     <tr>
+     *         <td>3</td>
+     *         <td>--</td>
+     *     </tr>
+     *     <tr>
+     *         <td>4</td>
+     *         <td>MH-13-AC-9999</td>
+     *     </tr>
+     * </table>
+     *
+     * @return the formatted text that captures the current status of the parking lot.
+     *
+     */
     public String status() {
-        StringBuilder stringBuilder = new StringBuilder("Slot No. Registration No.");
+        Formatter formatter = new Formatter(new StringBuilder());
+        formatter.format("%-8s %s\n", "Slot No.", "Registration No.");
         for (int i = 0; i < slots.size(); i++) {
             Car car = slots.get(i);
-            if (car != null){
-                // TODO: format columns/add width formatter
-                stringBuilder.append(i+" "+car.getRegNo());
-            }
+            String regNo = car != null ? car.getRegNo() : "--";
+            formatter.format("%-8d %s\n", i+1, regNo);
         }
-        return stringBuilder.toString();
+        return formatter.toString();
     }
 
     /**
