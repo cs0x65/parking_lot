@@ -2,6 +2,8 @@ package cs0x65.parkinglot.impl;
 
 import cs0x65.parkinglot.model.Car;
 import cs0x65.parkinglot.model.Ticket;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
@@ -36,12 +38,24 @@ public class ParkingLot implements Parkable<Car, Ticket>{
          * Creates a builder that will build the parking lot with the given size.<br/>
          * This is the maximum number of parking slots available in the generated parking lot (and therefore the maximum
          * number of cars that can be parked).
+         *
          * @param size the size of the {@code ParkingLot} that will be built.
          */
         public Builder(int size){
             this.size = size;
         }
 
+        /**
+         * If none of the fields are configured, then the {@code ParkingLot} instance created by this builder defaults
+         * to values below:<br/>
+         * name: a random name <br/>
+         * parked unit time: {@code ParkedTimeUnit.HOUR} <br/>
+         * initial duration: 2 hours <br/>
+         * subsequent duration: 1 hour <br/>
+         * initial duration rate: 10 <br/>
+         * subsequent duration rate: 10 <br/>
+         * @return the {@link ParkingLot} object built with the given specification.
+         */
         public ParkingLot build(){
             if (name == null)
                 name = "ParkingLot:"+ new Random().nextInt();
@@ -161,6 +175,8 @@ public class ParkingLot implements Parkable<Car, Ticket>{
 
     private int numOccupiedSlots;
 
+    private static final Logger LOGGER = LogManager.getLogger(ParkingLot.class.getName());
+
     private ParkingLot(Builder builder) {
         this.size = builder.size;
         this.name = builder.name;
@@ -242,28 +258,40 @@ public class ParkingLot implements Parkable<Car, Ticket>{
     }
 
     public Ticket park(Car car) {
-        if (numOccupiedSlots == size)
+        LOGGER.info("Request to park car: {} ", car.getRegNo());
+
+        if (numOccupiedSlots == size){
+            LOGGER.error("Parking lot is full! Can't park car: {}", car.getRegNo());
             throw new IllegalStateException("Sorry, parking lot is full");
+        }
 
         Ticket ticket = carTicketMap.get(car);
-        if (ticket != null)
-            throw new IllegalArgumentException("The car: "+car.getRegNo()+" is already parked at slot: "+
+        if (ticket != null) {
+            LOGGER.error("The car: {} is already parked at slot: {}! (no one is allowed to do this except " +
+                    "one & only Shaktiman) :P", car.getRegNo(), ticket.getSlot());
+            throw new IllegalArgumentException("The car: " + car.getRegNo() + " is already parked at slot: " +
                     ticket.getSlot());
+        }
 
         int index = getNearestAvailableSlotIndex();
         ticket = new Ticket(index, car, System.currentTimeMillis());
         slots.set(index-1, car);
         carTicketMap.put(car, ticket);
         numOccupiedSlots++;
+        LOGGER.info("Car: {} parked at slot: {}", car.getRegNo(), index);
+        LOGGER.info("Current num occupied slots: {} out of Total slots: {}", numOccupiedSlots, size);
         return ticket;
     }
 
     public Ticket leave(Car car, long duration) {
+        LOGGER.info("Request to un-park car: {} ", car.getRegNo());
         Ticket ticket = carTicketMap.get(car);
-        if (ticket == null)
-            throw new IllegalArgumentException("Sorry, the car: "+car.getRegNo()+" is not found in the parking lot, " +
-                    "please verify and provide the correct registration number for your car!");
-
+        if (ticket == null) {
+            LOGGER.error("The car: {} not found in the parking lot! Can't un-park a non-parked car " +
+                    "(unless it belongs to Thalaiva Rajani Sir ;-)", car.getRegNo());
+            throw new IllegalArgumentException("Sorry, the car: " + car.getRegNo() + " is not found in the parking " +
+                    "lot, please verify and provide the correct registration number for your car!");
+        }
         return removeCar(car, duration);
     }
 
@@ -275,11 +303,14 @@ public class ParkingLot implements Parkable<Car, Ticket>{
      * @return the ticket corresponding to the parked car which is slated to leave.
      */
     public Ticket leave(Car car) {
+        LOGGER.info("Request to un-park car: {} ", car.getRegNo());
         Ticket ticket = carTicketMap.get(car);
-        if (ticket == null)
-            throw new IllegalArgumentException("Sorry, the car: "+car.getRegNo()+" is not found in the parking lot, " +
-                    "please verify and provide the correct registration number for your car!");
-
+        if (ticket == null) {
+            LOGGER.error("The car: {} not found in the parking lot! Can't un-park a non-parked car " +
+                    "(unless it belongs to Thalaiva Rajani Sir) ;-)", car.getRegNo());
+            throw new IllegalArgumentException("Sorry, the car: " + car.getRegNo() + " is not found in the parking " +
+                    "lot, please verify and provide the correct registration number for your car!");
+        }
         return removeCar(car);
     }
 
@@ -315,9 +346,9 @@ public class ParkingLot implements Parkable<Car, Ticket>{
      * </table>
      *
      * @return the formatted text that captures the current status of the parking lot.
-     *
      */
     public String status() {
+        LOGGER.info("Gathering current status of the parking lot...");
         Formatter formatter = new Formatter(new StringBuilder());
         formatter.format("%-8s %s\n", "Slot No.", "Registration No.");
         for (int i = 0; i < slots.size(); i++) {
@@ -325,7 +356,9 @@ public class ParkingLot implements Parkable<Car, Ticket>{
             String regNo = car != null ? car.getRegNo() : "--";
             formatter.format("%-8d %s\n", i+1, regNo);
         }
-        return formatter.toString();
+        String status = formatter.toString();
+        LOGGER.info("\n"+status);
+        return status;
     }
 
     /**
@@ -343,6 +376,7 @@ public class ParkingLot implements Parkable<Car, Ticket>{
 
     private Ticket removeCar(Car car, long duration) {
         Ticket ticket = carTicketMap.get(car);
+
         slots.set(ticket.getSlot() - 1, null);
         carTicketMap.remove(car);
         // When the duration is directly provided, need to set leftAt = parkedAt + duration.
@@ -350,6 +384,9 @@ public class ParkingLot implements Parkable<Car, Ticket>{
             ticket.setLeftAt(ticket.getParkedAt() + duration * parkedTimeUnit.getTimeInSeconds() * 1000);
         ticket.setCharges(calculateCharges(duration));
         numOccupiedSlots--;
+        LOGGER.info("Car: {} left from slot: {}", car.getRegNo(), ticket.getSlot());
+        LOGGER.info("Charges accrued: {}", ticket.getCharges());
+        LOGGER.info("Current num occupied slots: {} out of Total slots: {}", numOccupiedSlots, size);
         return ticket;
     }
 

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="INFO" strict="true" name="DefaultLogConfig">
+	<Properties>
+		<Property name="logDir" value="logs"/>
+		<Property name="logFilename" value="app"/>
+		<Property name="logFilenameExtension" value=".log"/>
+	</Properties>
+	<Appenders>
+		<File name="file" fileName="${logDir}/${logFilename}${logFilenameExtension}">
+			<PatternLayout>
+				<Pattern>%d %p %c{1.} [%t] %m %ex%n</Pattern>
+			</PatternLayout>
+		</File>
+	</Appenders>
+	<Loggers>
+		<Root level="debug">
+			<AppenderRef ref="file" level="DEBUG"/>
+		</Root>
+	</Loggers>
+</Configuration>

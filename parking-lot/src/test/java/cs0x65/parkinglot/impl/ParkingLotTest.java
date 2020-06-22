@@ -141,6 +141,7 @@ class ParkingLotTest {
                 .withSubsequentDurationRate(5)
                 .build();
 
+        //TODO: try to do it with Mockito or some kinda time freeze lib
         assertEquals(0, parkingLot.getNumOccupiedSlots());
 
         assertEquals(1, parkingLot.getNearestAvailableSlotIndex());
@@ -158,6 +159,30 @@ class ParkingLotTest {
     }
 
     @Test
+    public void leaveUnparkedCarThrowsException(){
+        parkingLot = new ParkingLot.Builder(1).build();
+        assertEquals(0, parkingLot.getNumOccupiedSlots());
+
+        assertEquals(1, parkingLot.getNearestAvailableSlotIndex());
+        Car car = new Car("MH-12-AB-1234");
+        String expectedMessage = "Sorry, the car: " + car.getRegNo() + " is not found in the parking " +
+                "lot, please verify and provide the correct registration number for your car!";
+        IllegalArgumentException exception =  assertThrows(IllegalArgumentException.class, () -> parkingLot.leave(car));
+        assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
     void status() {
+        parkingLot = new ParkingLot.Builder(1).build();
+
+        String status = parkingLot.status();
+        String[] rows = status.split("\n");
+        assertEquals("Slot No. Registration No.", rows[0]);
+        assertEquals("1        --", rows[1]);
+
+        Car car = new Car("MH-12-AB-1234");
+        parkingLot.park(car);
+        status = parkingLot.status();
+        assertEquals("1        MH-12-AB-1234", status.split("\n")[1]);
     }
 }
