@@ -52,9 +52,8 @@ public class DefaultParserImpl implements Parser<ParkingLot> {
                 throw new IllegalArgumentException();
 
             Method method = ParkingLot.class.getMethod(Command.Verb.CREATE_PARKING_LOT.internal(), int.class);
-            Command<ParkingLot> command = new Command<>(Command.Verb.CREATE_PARKING_LOT, method, Integer.parseInt(args.get(0)));
-            command.setMethods(Collections.singletonList("getSize"));
-            command.setOutputTemplate("Created parking lot with %s slots");
+            Command<ParkingLot> command = new Command<>(Command.Verb.CREATE_PARKING_LOT, method, size);
+            command.setOutputTemplate("Created parking lot with "+size+" slots");
             return command;
         }catch (IllegalArgumentException | NoSuchMethodException e){
             LOGGER.error("Failed to parse {} command: invalid size", Command.Verb.CREATE_PARKING_LOT.lName(),
@@ -97,16 +96,21 @@ public class DefaultParserImpl implements Parser<ParkingLot> {
 
             Command<ParkingLot> command;
             Method method;
+
             // Command variant with duration.
             if (args.size() > 1){
+                long duration = Long.parseLong(args.get(1));
+                if (duration < 0)
+                    throw new IllegalArgumentException();
+
                 method = ParkingLot.class.getMethod(Command.Verb.LEAVE.internal(), Car.class, long.class);
-                command = new Command<>(Command.Verb.LEAVE, method, new Car(args.get(0)), Long.parseLong(args.get(1)));
+                command = new Command<>(Command.Verb.LEAVE, method, new Car(args.get(0)), duration);
             }else {
                 // Command variant w/o duration.
                 method = ParkingLot.class.getMethod(Command.Verb.LEAVE.internal(), Car.class);
                 command = new Command<>(Command.Verb.LEAVE, method, new Car(args.get(0)));
             }
-            //command.setMethods(Arrays.asList("getCar.getRegNo", "getSlot", "getCharges"));
+
             command.setMethods(Arrays.asList("getSlot", "getCharges"));
             command.setOutputTemplate("Registration number "+args.get(0)+" with Slot Number %d is free with Charge %d");
             return command;
@@ -124,8 +128,12 @@ public class DefaultParserImpl implements Parser<ParkingLot> {
         LOGGER.info("Command: "+ Command.Verb.STATUS+" Args: "+args);
 
         try {
-            Method method = ParkingLot.class.getMethod(Command.Verb.STATUS.internal());
-            return new Command<>(Command.Verb.STATUS, method);
+            boolean includeEmptySlots = false;
+            if (args.size() > 0)
+                includeEmptySlots = Boolean.parseBoolean(args.get(0));
+
+            Method method = ParkingLot.class.getMethod(Command.Verb.STATUS.internal(), boolean.class);
+            return new Command<>(Command.Verb.STATUS, method, includeEmptySlots);
         } catch (NoSuchMethodException e) {
             throw new BadCommandException(e.getMessage());
         }
@@ -137,18 +145,21 @@ public class DefaultParserImpl implements Parser<ParkingLot> {
         switch (verb){
             case CREATE_PARKING_LOT:
                 formatter.format("%s {size}", Command.Verb.CREATE_PARKING_LOT.lName());
+                formatter.format("\n\tcreates a parking lot");
                 formatter.format("\n\twhere 'size' is the parking lot size specified as an integer");
                 formatter.format("\n\tfor e.g. create_parking_lot 10");
                 return formatter.toString();
             case PARK:
-                formatter.format("%s {registration no}", Command.Verb.PARK.lName());
-                formatter.format("\n\twhere 'registration no' is the registration number of the car to be parked" +
+                formatter.format("%s {registrationNo}", Command.Verb.PARK.lName());
+                formatter.format("\n\tparks the car in the parking lot");
+                formatter.format("\n\twhere 'registrationNo' is the registration number of the car to be parked" +
                         "in the format: <MH-12-AB-9876>");
                 formatter.format("\n\tfor e.g. park KA-01-HH-1234");
                 return formatter.toString();
             case LEAVE:
-                formatter.format("%s {registration no} [duration]", Command.Verb.LEAVE.lName());
-                formatter.format("\n\twhere 'registration no' is the registration number of the car to be parked" +
+                formatter.format("%s {registrationNo, [duration]}", Command.Verb.LEAVE.lName());
+                formatter.format("\n\tun-parks/removes the car from the parking lot");
+                formatter.format("\n\twhere 'registrationNo' is the registration number of the car to be parked" +
                         "in the format: <MH-12-AB-9876>");
                 formatter.format("\n\twhere 'duration' is an optional argument specifying the duration for which" +
                         "the corresponding car was parked");
@@ -156,9 +167,12 @@ public class DefaultParserImpl implements Parser<ParkingLot> {
                 formatter.format("\n\t\twithout optional duration arg-  leave KA-01-HH-1234");
                 return formatter.toString();
             case STATUS:
-                formatter.format(Command.Verb.STATUS.lName());
+                formatter.format("%s {[includeEmptySlots]}", Command.Verb.STATUS.lName());
                 formatter.format("\n\tprints the textual representation of the current snapshot of the parking lot");
-                formatter.format("\n\tfor e.g. status");
+                formatter.format("\n\twhere 'includeEmptySlots' is an optional argument specifying whether to " +
+                        "include empty parking slots in the status information; defaults to false.");
+                formatter.format("\n\tfor e.g. without optional includeEmptySlots arg-  status");
+                formatter.format("\n\twith optional arg - status true");
                 return formatter.toString();
         }
         return usage;

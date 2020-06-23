@@ -78,7 +78,8 @@ class CommandTest {
 
             ParkingLot parkingLot = (ParkingLot) command.getResult();
 
-            command = parser.parse("status");
+            // Includes empty slots
+            command = parser.parse("status true");
             String output = command.setTarget(parkingLot).execute();
             List<String> expected = Arrays.asList(
                     "Slot No. Registration No.",
@@ -93,6 +94,7 @@ class CommandTest {
             command = parser.parse("park MH-13-A-4994");
             command.setTarget(parkingLot).execute();
 
+            // Excludes empty slots - default behaviour.
             command = parser.parse("status");
             output = command.setTarget(parkingLot).execute();
             expected = Arrays.asList(

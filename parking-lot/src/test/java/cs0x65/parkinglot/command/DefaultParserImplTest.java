@@ -67,7 +67,7 @@ class DefaultParserImplTest {
             Command<ParkingLot> command = parser.parse(cmdStr);
             assertEquals(Command.Verb.STATUS,  command.getVerb());
             assertEquals("status",  command.getVerb().internal());
-            assertArrayEquals(new Object[]{}, command.getArgs());
+            assertArrayEquals(new Object[]{false}, command.getArgs());
         }catch (BadCommandException e){
         }
     }

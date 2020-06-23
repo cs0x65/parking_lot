@@ -1,11 +1,8 @@
 package cs0x65.parkinglot.io;
 
-import org.apache.logging.log4j.LogManager;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class ProcessorTest {
 

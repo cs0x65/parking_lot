@@ -196,6 +196,12 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         }
     }
 
+    /**
+     * A convenience method to create a ParkingLot object with default configuration.
+     * This method is effectively same as: {@code new Builder().build(size)} with none of the other fields configured.
+     * @param size the size of the parking lot
+     * @return {@code ParkingLot} with the specified size while rest of the fields configured to default values.
+     */
     public static ParkingLot create(int size){
         return new Builder(size).build();
     }
@@ -322,9 +328,12 @@ public class ParkingLot implements Parkable<Car, Ticket>{
      * The formatted text contains two columns/headers: the 1st column is Slot No. & 2nd Registration No.
      * with each entry on a separate row.
      * <br/><br/>
-     * Note: If the parking slot is empty, it's represented as "--" under the 2nd column.
+     * Note: If the parking slot is empty & {@code includeEmptySlots=true}, it's represented as "--" under the 2nd
+     * column, whereas if {@code includeEmptySlots=false} then the slot entry is all together dropped from the status.
      * <br/><br/>
-     * E.g. if the parking lot has 4 slots and when all of those are occupied, then the status looks like:<br/>
+     * E.g. if the parking lot has 3 slots and if 2nd slot is empty, then the status looks like:<br/><br/>
+     *
+     * with {@code includeEmptySlots=true}
      *
      * <table>
      *     <th>Slot No.</th>
@@ -335,28 +344,43 @@ public class ParkingLot implements Parkable<Car, Ticket>{
      *     </tr>
      *     <tr>
      *         <td>2</td>
-     *         <td>MH-15-FG-102</td>
-     *     </tr>
-     *     <tr>
-     *         <td>3</td>
      *         <td>--</td>
      *     </tr>
      *     <tr>
-     *         <td>4</td>
+     *         <td>3</td>
      *         <td>MH-13-AC-9999</td>
      *     </tr>
      * </table>
      *
+     * <br/><br/>
+     *
+     * with {@code includeEmptySlots=false}, 2nd slot is dropped from the status info.
+     * <table>
+     *     <th>Slot No.</th>
+     *     <th>Registration No.</th>
+     *     <tr>
+     *         <td>1</td>
+     *         <td>MH-12-AB-1234</td>
+     *     </tr>
+     *     <tr>
+     *         <td>3</td>
+     *         <td>MH-13-AC-9999</td>
+     *     </tr>
+     * </table>
+     *
+     * @param includeEmptySlots specifies whether the status information shall include empty slots.
      * @return the formatted text that captures the current status of the parking lot.
      */
-    public String status() {
+    public String status(boolean includeEmptySlots) {
         LOGGER.info("Gathering current status of the parking lot...");
         Formatter formatter = new Formatter(new StringBuilder());
         formatter.format("%-8s %s\n", "Slot No.", "Registration No.");
         for (int i = 0; i < slots.size(); i++) {
             Car car = slots.get(i);
-            String regNo = car != null ? car.getRegNo() : "--";
-            formatter.format("%-8d %s\n", i+1, regNo);
+            if (car != null)
+                formatter.format("%-8d %s\n", i+1, car.getRegNo());
+            else if (includeEmptySlots)
+                formatter.format("%-8d %s\n", i+1, "--");
         }
         String status = formatter.toString();
         // Remove last \n

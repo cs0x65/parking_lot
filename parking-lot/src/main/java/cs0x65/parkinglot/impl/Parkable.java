@@ -30,8 +30,9 @@ public interface Parkable<O, T> {
     T leave(O object, long duration);
 
     /**
-     * @return the status of the parkable resource. The impementing classes are free to return whatever is relevant
-     * to their domain and satisfy their semtantics.
+     * @param includeEmptySlots specifies whether the status information shall include empty slots.
+     * @return the status of the parkable resource. The implementing classes are free to return whatever is relevant
+     * to their domain and satisfy their semantics.
      */
-    String status();
+    String status(boolean includeEmptySlots);
 }

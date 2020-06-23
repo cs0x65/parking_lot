@@ -91,12 +91,20 @@ public class Command<T> {
         try {
             Object object = Modifier.isStatic(verbMethod.getModifiers()) ? ParkingLot.class : target;
             result = verbMethod.invoke(object, args);
+            // The underlying domain class method of the command itself returns String, so no need to bind template
+            // params to values for e.g. status() method
             if (result instanceof String){
                 return (String) result;
             }
             if (outputTemplate == null || outputTemplate.trim().isEmpty()){
                 return "";
             }
+            // There's a valid template, but it's params are already bound to values; so return template itself.
+            if (methods == null || methods.isEmpty()){
+                LOGGER.info(outputTemplate);
+                return outputTemplate;
+            }
+            // Bind template params to values
             Object[] values = new Object[methods.size()];
             for (int i = 0; i < methods.size(); i++) {
                 values[i] = result.getClass().getDeclaredMethod(methods.get(i)).invoke(result);

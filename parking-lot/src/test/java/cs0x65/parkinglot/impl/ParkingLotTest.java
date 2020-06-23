@@ -171,17 +171,39 @@ class ParkingLotTest {
     }
 
     @Test
-    void status() {
+    void statusWhenIncludeEmptySlotsIsTrue() {
         parkingLot = new ParkingLot.Builder(1).build();
 
-        String status = parkingLot.status();
+        String status = parkingLot.status(true);
         String[] rows = status.split("\n");
         assertEquals("Slot No. Registration No.", rows[0]);
         assertEquals("1        --", rows[1]);
 
         Car car = new Car("MH-12-AB-1234");
         parkingLot.park(car);
-        status = parkingLot.status();
+        status = parkingLot.status(true);
         assertEquals("1        MH-12-AB-1234", status.split("\n")[1]);
+    }
+
+    @Test
+    void statusWhenIncludeEmptySlotsIsFalse() {
+        parkingLot = new ParkingLot.Builder(2).build();
+
+        String status = parkingLot.status(false);
+        String[] rows = status.split("\n");
+        assertEquals("Slot No. Registration No.", rows[0]);
+
+        Car car = new Car("MH-12-AB-1234");
+        parkingLot.park(car);
+        Car car2 = new Car("MH-13-AC-9999");
+        parkingLot.park(car2);
+
+        status = parkingLot.status(false);
+        assertEquals("1        MH-12-AB-1234", status.split("\n")[1]);
+        assertEquals("2        MH-13-AC-9999", status.split("\n")[2]);
+
+        parkingLot.leave(car);
+        status = parkingLot.status(false);
+        assertEquals("2        MH-13-AC-9999", status.split("\n")[1]);
     }
 }
