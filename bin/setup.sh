@@ -2,5 +2,4 @@
 
 dir=$(pwd)
 echo $dir 
-cd parking-lot
-mvn clean package
+cd parking-lot && ./mvnw clean package

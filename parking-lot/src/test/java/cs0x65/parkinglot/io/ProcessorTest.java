@@ -1,5 +1,6 @@
 package cs0x65.parkinglot.io;
 
+import cs0x65.parkinglot.command.BadCommandException;
 import cs0x65.parkinglot.command.Command;
 import org.junit.jupiter.api.Test;
 

@@ -85,7 +85,8 @@ class DefaultParserImplTest {
     void parseCreateParkingLotThrowsExceptionWhenPassedInvalidArg() {
         String cmdStr1 = "create_parking_lot";
         BadCommandException badCommandException = assertThrows(BadCommandException.class, () -> parser.parse(cmdStr1));
-        List<String> expected = Collections.singletonList("'size' - not a valid argument for the command: create_parking_lot");
+        List<String> expected = Collections.singletonList("'size' - not a valid argument for the command: " +
+                "create_parking_lot");
         List<String > actual = Collections.singletonList(badCommandException.getMessage().split("\n")[0]);
         assertLinesMatch(expected, actual);
 

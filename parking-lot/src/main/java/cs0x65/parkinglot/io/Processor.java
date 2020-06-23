@@ -25,6 +25,7 @@ public class Processor {
     private final String filePath;
     private String outFilePath;
     private final Parser<ParkingLot> parser = new DefaultParserImpl();
+    private Command<ParkingLot> currentCommand;
     private static final Logger LOGGER = LogManager.getLogger(Processor.class.getName());
 
     public Processor(String filePath) {
@@ -73,7 +74,7 @@ public class Processor {
             }
         }catch (IOException | BadCommandException | CommandOutputFormatException e){
             LOGGER.error("Failed to process command {}", cmdStr);
-            LOGGER.error(e.fillInStackTrace());
+            LOGGER.error(e);
         }
     }
 
