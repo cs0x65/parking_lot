@@ -38,6 +38,6 @@ public class Car {
         if (!(o instanceof Car))
             return false;
         Car car = (Car)o;
-        return car.regNo == regNo && car.color == color;
+        return car.regNo.equals(regNo) && car.color.equals(color);
     }
 }

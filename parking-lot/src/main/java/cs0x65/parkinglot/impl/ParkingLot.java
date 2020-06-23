@@ -196,6 +196,10 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         }
     }
 
+    public static ParkingLot create(int size){
+        return new Builder(size).build();
+    }
+
     /**
      *
      * @return the size of the parking lot.
@@ -289,8 +293,7 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         if (ticket == null) {
             LOGGER.error("The car: {} not found in the parking lot! Can't un-park a non-parked car " +
                     "(unless it belongs to Thalaiva Rajani Sir ;-)", car.getRegNo());
-            throw new IllegalArgumentException("Sorry, the car: " + car.getRegNo() + " is not found in the parking " +
-                    "lot, please verify and provide the correct registration number for your car!");
+            throw new IllegalArgumentException("Registration number " + car.getRegNo() + " not found");
         }
         return removeCar(car, duration);
     }
@@ -308,8 +311,7 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         if (ticket == null) {
             LOGGER.error("The car: {} not found in the parking lot! Can't un-park a non-parked car " +
                     "(unless it belongs to Thalaiva Rajani Sir) ;-)", car.getRegNo());
-            throw new IllegalArgumentException("Sorry, the car: " + car.getRegNo() + " is not found in the parking " +
-                    "lot, please verify and provide the correct registration number for your car!");
+            throw new IllegalArgumentException("Registration number " + car.getRegNo() + " not found");
         }
         return removeCar(car);
     }
@@ -357,6 +359,8 @@ public class ParkingLot implements Parkable<Car, Ticket>{
             formatter.format("%-8d %s\n", i+1, regNo);
         }
         String status = formatter.toString();
+        // Remove last \n
+        status = status.substring(0, status.length()-1);
         LOGGER.info("\n"+status);
         return status;
     }

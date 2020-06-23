@@ -165,8 +165,7 @@ class ParkingLotTest {
 
         assertEquals(1, parkingLot.getNearestAvailableSlotIndex());
         Car car = new Car("MH-12-AB-1234");
-        String expectedMessage = "Sorry, the car: " + car.getRegNo() + " is not found in the parking " +
-                "lot, please verify and provide the correct registration number for your car!";
+        String expectedMessage = "Registration number " + car.getRegNo() + " not found";
         IllegalArgumentException exception =  assertThrows(IllegalArgumentException.class, () -> parkingLot.leave(car));
         assertEquals(expectedMessage, exception.getMessage());
     }

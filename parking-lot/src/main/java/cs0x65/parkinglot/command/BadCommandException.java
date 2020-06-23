@@ -8,7 +8,6 @@ public class BadCommandException extends Exception{
 
     public BadCommandException(String verb) {
         super(String.format(badCommandMessage, verb));
-
     }
 
     public BadCommandException(String verb, String arg, String usageDetails) {

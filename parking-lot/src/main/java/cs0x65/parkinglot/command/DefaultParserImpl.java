@@ -1,20 +1,22 @@
 package cs0x65.parkinglot.command;
 
 import cs0x65.parkinglot.impl.ParkingLot;
-import cs0x65.parkinglot.model.Ticket;
+import cs0x65.parkinglot.model.Car;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DefaultParserImpl implements Parser {
+public class DefaultParserImpl implements Parser<ParkingLot> {
     private static final Logger LOGGER = LogManager.getLogger(DefaultParserImpl.class.getName());
 
     @Override
-    public <T, R> Command<T, R> parse(String commandString) throws BadCommandException{
+    public Command<ParkingLot> parse(String commandString) throws BadCommandException{
         // Makes sure that redundant white spaces are ignored.
         List<String> components = Arrays.stream(commandString.trim().split(" ")).
                 filter(s -> !s.trim().equals("")).
@@ -25,13 +27,13 @@ public class DefaultParserImpl implements Parser {
             List<String> args = components.subList(1, components.size());
             switch (verb){
                 case CREATE_PARKING_LOT:
-                    return (Command<T, R>) parseCreateCommand(args);
+                    return parseCreateCommand(args);
                 case PARK:
-                    return (Command<T, R>) parseParkCommand(args);
+                    return  parseParkCommand(args);
                 case LEAVE:
-                    return (Command<T, R>) parseLeaveCommand(args);
+                    return parseLeaveCommand(args);
                 case STATUS:
-                    return (Command<T, R>) parseStatusCommand(args);
+                    return parseStatusCommand(args);
             }
         }catch (IllegalArgumentException e){
             throw new BadCommandException(components.get(0));
@@ -39,7 +41,7 @@ public class DefaultParserImpl implements Parser {
         return null;
     }
 
-    private Command<ParkingLot.Builder, ParkingLot> parseCreateCommand(List<String> args) throws BadCommandException {
+    private Command<ParkingLot> parseCreateCommand(List<String> args) throws BadCommandException {
         LOGGER.info("Command: {} Args: {}", Command.Verb.CREATE_PARKING_LOT.lName(), args);
         try {
             if (args.size() < 1)
@@ -49,8 +51,12 @@ public class DefaultParserImpl implements Parser {
             if (size < 0)
                 throw new IllegalArgumentException();
 
-            return new Command<>(Command.Verb.CREATE_PARKING_LOT, Integer.parseInt(args.get(0)));
-        }catch (IllegalArgumentException e){
+            Method method = ParkingLot.class.getMethod(Command.Verb.CREATE_PARKING_LOT.internal(), int.class);
+            Command<ParkingLot> command = new Command<>(Command.Verb.CREATE_PARKING_LOT, method, Integer.parseInt(args.get(0)));
+            command.setMethods(Collections.singletonList("getSize"));
+            command.setOutputTemplate("Created parking lot with %s slots");
+            return command;
+        }catch (IllegalArgumentException | NoSuchMethodException e){
             LOGGER.error("Failed to parse {} command: invalid size", Command.Verb.CREATE_PARKING_LOT.lName(),
                     e);
             throw new BadCommandException(
@@ -61,14 +67,18 @@ public class DefaultParserImpl implements Parser {
         }
     }
 
-    private Command<ParkingLot, Ticket> parseParkCommand(List<String> args) throws BadCommandException {
+    private Command<ParkingLot> parseParkCommand(List<String> args) throws BadCommandException {
         LOGGER.info("Command: {} Args: {}", Command.Verb.PARK.lName(), args);
         try {
             if (args.size() < 1)
                 throw new IllegalArgumentException();
 
-            return new Command<>(Command.Verb.PARK, args.get(0));
-        }catch (Exception e){
+            Method method = ParkingLot.class.getMethod(Command.Verb.PARK.internal(), Car.class);
+            Command<ParkingLot> command = new Command<>(Command.Verb.PARK, method, new Car(args.get(0)));
+            command.setMethods(Collections.singletonList("getSlot"));
+            command.setOutputTemplate("Allocated slot number: %d");
+            return command;
+        }catch (IllegalArgumentException | NoSuchMethodException e){
             LOGGER.error("Failed to parse {} command: invalid registration no for the car",
                     Command.Verb.PARK.lName(), e);
             throw new BadCommandException(
@@ -79,19 +89,28 @@ public class DefaultParserImpl implements Parser {
         }
     }
 
-    private Command<ParkingLot, Ticket> parseLeaveCommand(List<String> args) throws BadCommandException {
+    private Command<ParkingLot> parseLeaveCommand(List<String> args) throws BadCommandException {
         LOGGER.info("Command: {} Args: {}", Command.Verb.LEAVE.lName(), args);
         try {
             if (args.size() < 1)
                 throw new IllegalArgumentException();
 
+            Command<ParkingLot> command;
+            Method method;
             // Command variant with duration.
             if (args.size() > 1){
-                return new Command<>(Command.Verb.LEAVE, args.get(0), Long.parseLong(args.get(1)));
+                method = ParkingLot.class.getMethod(Command.Verb.LEAVE.internal(), Car.class, long.class);
+                command = new Command<>(Command.Verb.LEAVE, method, new Car(args.get(0)), Long.parseLong(args.get(1)));
+            }else {
+                // Command variant w/o duration.
+                method = ParkingLot.class.getMethod(Command.Verb.LEAVE.internal(), Car.class);
+                command = new Command<>(Command.Verb.LEAVE, method, new Car(args.get(0)));
             }
-            // Command variant w/o duration.
-            return new Command<>(Command.Verb.LEAVE, args.get(0));
-        }catch (Exception e){
+            //command.setMethods(Arrays.asList("getCar.getRegNo", "getSlot", "getCharges"));
+            command.setMethods(Arrays.asList("getSlot", "getCharges"));
+            command.setOutputTemplate("Registration number "+args.get(0)+" with Slot Number %d is free with Charge %d");
+            return command;
+        }catch (IllegalArgumentException | NoSuchMethodException e){
             LOGGER.error("Failed to parse {} command: invalid duration", Command.Verb.LEAVE.lName(), e);
             throw new BadCommandException(
                     Command.Verb.LEAVE.lName(),
@@ -101,9 +120,15 @@ public class DefaultParserImpl implements Parser {
         }
     }
 
-    private Command<ParkingLot, String> parseStatusCommand(List<String> args) {
+    private Command<ParkingLot> parseStatusCommand(List<String> args) throws BadCommandException{
         LOGGER.info("Command: "+ Command.Verb.STATUS+" Args: "+args);
-        return new Command<>(Command.Verb.STATUS);
+
+        try {
+            Method method = ParkingLot.class.getMethod(Command.Verb.STATUS.internal());
+            return new Command<>(Command.Verb.STATUS, method);
+        } catch (NoSuchMethodException e) {
+            throw new BadCommandException(e.getMessage());
+        }
     }
 
     private static String usageHelpText(Command.Verb verb){
