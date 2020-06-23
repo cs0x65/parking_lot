@@ -84,9 +84,13 @@ whereas `ParkingLot` is the target that implements the relevant commands.
 The java docs provide a comprehensive documentation about the different classes and interfaces.  
 Please refer: _**site/apidocs/index.html**_   
 
-Overall the classes interact in the following way:
+The project has the `maven-javadoc-plugin` plugin that can be used to generate the java docs in following manner:
+```shell script
+cd parking-lot && ./mvnw javadoc:javadoc
+```
 
+#### Overall the classes interact in the following way:
 
-![Alt text](Design.png?raw=true "Design")
+![Alt text](parking-lot/Design.png?raw=true "Design")
 
  
