@@ -62,11 +62,12 @@ public class Ticket {
     }
 
     /**
-     * @param parkedTimeUnit {@link ParkingLot.ParkedTimeUnit}
+     * @param parkedTimeUnit {@link cs0x65.parkinglot.impl.ParkingLot.ParkedTimeUnit}
      * @return the total duration of the parking session measured in specified time unit and ceil'ed to nearest
      * time unit.
      * <br/>
-     * E.g. if the {@code parkedTimeUnit} is {@link ParkingLot.ParkedTimeUnit#HOUR}, and the duration
+     * E.g. if the {@code parkedTimeUnit} is {@link cs0x65.parkinglot.impl.ParkingLot.ParkedTimeUnit#HOUR}, and
+     * the duration
      * is 9000 seconds i.e. 2.5 hours, then this method returns ceil'ed hours i.e. 3.
      */
     public long getDuration(ParkingLot.ParkedTimeUnit parkedTimeUnit){

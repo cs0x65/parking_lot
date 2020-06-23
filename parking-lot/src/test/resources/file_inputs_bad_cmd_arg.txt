@@ -1,0 +1,3 @@
+create_parking_lot 5
+park MH-12-NE-8900
+leave MH-12-NE-8900 -8

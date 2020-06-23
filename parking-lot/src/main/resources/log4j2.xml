@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration status="INFO" strict="true" name="DefaultLogConfig">
+<Configuration status="ERROR" name="DefaultLogConfig">
 	<Properties>
 		<Property name="logDir" value="logs"/>
 		<Property name="logFilename" value="app"/>
@@ -11,10 +11,14 @@
 				<Pattern>%d %p %c{1.} [%t] %m %ex%n</Pattern>
 			</PatternLayout>
 		</File>
+		<Console name="STDOUT" target="SYSTEM_OUT">
+			<PatternLayout pattern="%m%n"/>
+		</Console>
 	</Appenders>
 	<Loggers>
-		<Root level="debug">
-			<AppenderRef ref="file" level="DEBUG"/>
+		<Root level="ERROR">
+			<AppenderRef ref="file" level="INFO"/>
+			<AppenderRef ref="STDOUT" level="ERROR"/>
 		</Root>
 	</Loggers>
 </Configuration>

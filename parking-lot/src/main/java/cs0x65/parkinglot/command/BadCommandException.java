@@ -2,6 +2,15 @@ package cs0x65.parkinglot.command;
 
 import java.util.Arrays;
 
+/**
+ * Represents the exception encountered during the command parsing.
+ * The class provides the details like:
+ * <ul>
+ *     <li>If the command is supported<li/>
+ *     <li>If the arguments are invalid and if so, which one<li/>
+ *     <li>Correct usage information along with an example<li/>
+ * </ul>
+ */
 public class BadCommandException extends Exception{
     private static final String badCommandMessage = badCommandMessageTemplate();
     private static final String badArgumentMessage = badArgumentMessageTemplate();

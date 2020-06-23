@@ -12,6 +12,19 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * The parking lot specific parser.
+ * It does an extensive work of parsing, syntactical analysis, emitting the usage help text in case of wrong command
+ * usage etc. apart from the core responsibility of binding textual commands read from the source to the parking lot
+ * specific commands: {@code Command<ParkingLot>}
+ * The supported commands are
+ * <ul>
+ *     <li>create_parking_lot {size}</li>
+ *     <li>park {registraionNo}</li>
+ *     <li>leave {registraionNo [duration]}</li>
+ *     <li>status {[includeEmptySlots]]}</li>
+ * </ul>
+ */
 public class DefaultParserImpl implements Parser<ParkingLot> {
     private static final Logger LOGGER = LogManager.getLogger(DefaultParserImpl.class.getName());
 
@@ -74,7 +87,7 @@ public class DefaultParserImpl implements Parser<ParkingLot> {
 
             Method method = ParkingLot.class.getMethod(Command.Verb.PARK.internal(), Car.class);
             Command<ParkingLot> command = new Command<>(Command.Verb.PARK, method, new Car(args.get(0)));
-            command.setMethods(Collections.singletonList("getSlot"));
+            command.setResultAccessors(Collections.singletonList("getSlot"));
             command.setOutputTemplate("Allocated slot number: %d");
             return command;
         }catch (IllegalArgumentException | NoSuchMethodException e){
@@ -111,7 +124,7 @@ public class DefaultParserImpl implements Parser<ParkingLot> {
                 command = new Command<>(Command.Verb.LEAVE, method, new Car(args.get(0)));
             }
 
-            command.setMethods(Arrays.asList("getSlot", "getCharges"));
+            command.setResultAccessors(Arrays.asList("getSlot", "getCharges"));
             command.setOutputTemplate("Registration number "+args.get(0)+" with Slot Number %d is free with Charge %d");
             return command;
         }catch (IllegalArgumentException | NoSuchMethodException e){

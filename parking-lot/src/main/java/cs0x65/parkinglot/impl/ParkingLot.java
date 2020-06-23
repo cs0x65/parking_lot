@@ -276,12 +276,9 @@ public class ParkingLot implements Parkable<Car, Ticket>{
         }
 
         Ticket ticket = carTicketMap.get(car);
-        if (ticket != null) {
-            LOGGER.error("The car: {} is already parked at slot: {}! (no one is allowed to do this except " +
-                    "one & only Shaktiman) :P", car.getRegNo(), ticket.getSlot());
+        if (ticket != null)
             throw new IllegalArgumentException("The car: " + car.getRegNo() + " is already parked at slot: " +
                     ticket.getSlot());
-        }
 
         int index = getNearestAvailableSlotIndex();
         ticket = new Ticket(index, car, System.currentTimeMillis());
@@ -296,11 +293,9 @@ public class ParkingLot implements Parkable<Car, Ticket>{
     public Ticket leave(Car car, long duration) {
         LOGGER.info("Request to un-park car: {} ", car.getRegNo());
         Ticket ticket = carTicketMap.get(car);
-        if (ticket == null) {
-            LOGGER.error("The car: {} not found in the parking lot! Can't un-park a non-parked car " +
-                    "(unless it belongs to Thalaiva Rajani Sir ;-)", car.getRegNo());
+        if (ticket == null)
             throw new IllegalArgumentException("Registration number " + car.getRegNo() + " not found");
-        }
+
         return removeCar(car, duration);
     }
 
@@ -314,11 +309,9 @@ public class ParkingLot implements Parkable<Car, Ticket>{
     public Ticket leave(Car car) {
         LOGGER.info("Request to un-park car: {} ", car.getRegNo());
         Ticket ticket = carTicketMap.get(car);
-        if (ticket == null) {
-            LOGGER.error("The car: {} not found in the parking lot! Can't un-park a non-parked car " +
-                    "(unless it belongs to Thalaiva Rajani Sir) ;-)", car.getRegNo());
+        if (ticket == null)
             throw new IllegalArgumentException("Registration number " + car.getRegNo() + " not found");
-        }
+
         return removeCar(car);
     }
 

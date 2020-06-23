@@ -1,5 +1,9 @@
 package cs0x65.parkinglot.command;
 
+/**
+ * The class captures the exception encountered during binding of the {@link Command}'s output template
+ * with the supplied accessors.
+ */
 public class CommandOutputFormatException extends Exception{
     public CommandOutputFormatException() {
     }
