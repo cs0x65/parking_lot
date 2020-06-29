@@ -25,11 +25,10 @@ public class Processor {
     private final String filePath;
     private String outFilePath;
     private final Parser<ParkingLot> parser = new DefaultParserImpl();
-    private Command<ParkingLot> currentCommand;
     private static final Logger LOGGER = LogManager.getLogger(Processor.class.getName());
 
     public Processor(String filePath) {
-        this.filePath = filePath;
+        this(filePath, null);
     }
 
     public Processor(String filePath, String outFilePath) {
